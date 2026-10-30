@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+"""从 leetcode/<题号>.<slug>.cpp 生成 tests/<题号>.cpp 骨架。
+
+用法:
+    tools/newtest 739        生成 tests/739.cpp（已存在则拒绝覆盖）
+    tools/newtest -f 739     强制覆盖
+    tools/newtest --stats    看哪些题还没有测试
+
+只做一件事：把 class Solution 的第一个 public 方法签名抄出来，
+生成参数声明 + 调用 + 打印，把「需要你自己想的输入」留成 TODO。
+"""
+from __future__ import annotations
+
+import glob
+import pathlib
+import re
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+LEET = ROOT / "leetcode"
+TESTS = ROOT / "tests"
+
+METHOD_RE = re.compile(r"^\s{2,}(?:const\s+)?(.+?)\s*\b(\w+)\s*\(([^)]*)\)\s*(?:const)?\s*\{\s*$")
+
+
+def split_top(s: str, sep: str = ",") -> list[str]:
+    out, depth, cur = [], 0, []
+    for ch in s:
+        if ch in "<([":
+            depth += 1
+        elif ch in ">)]":
+            depth -= 1
+        if ch == sep and depth == 0:
+            out.append("".join(cur))
+            cur = []
+        else:
+            cur.append(ch)
+    if "".join(cur).strip():
+        out.append("".join(cur))
+    return [x.strip() for x in out if x.strip()]
+
+
+def parse_params(raw: str) -> list[tuple[str, str]]:
+    """返回 [(类型, 变量名), ...]，类型已去掉 const / &。"""
+    params = []
+    for p in split_top(raw):
+        p = p.split("=")[0].strip()          # 去掉默认值
+        m = re.match(r"^(.+?)\s*([\w\[\]]+)$", p)
+        if not m:
+            continue
+        ptype, name = m.group(1).strip(), m.group(2).strip()
+        ptype = ptype.replace("const", "").replace("&", "").strip()
+        ptype = re.sub(r"\s*\*\s*", " *", ptype)   # ListNode * head → ListNode *head
+        params.append((ptype, name))
+    return params
+
+
+def find_signature(src: str) -> tuple[str, str, str] | None:
+    body = src
+    if "// @lc code=start" in src:
+        body = src.split("// @lc code=start", 1)[1].split("// @lc code=end", 1)[0]
+    for line in body.splitlines():
+        if not line.rstrip().endswith("{"):
+            continue
+        m = METHOD_RE.match(line)
+        if not m:
+            continue
+        ret = m.group(1).strip()
+        name = m.group(2)
+        if name in {"if", "for", "while", "switch", "catch", "Solution"}:
+            continue
+        return ret, name, m.group(3)
+    return None
+
+
+HELPERS = '''\
+// ---- 打印辅助（返回类型不支持时请手改） ----
+[[maybe_unused]] static void show(const std::vector<int> &v) {
+    for (int x : v) std::cout << x << ' ';
+    std::cout << '\\n';
+}
+[[maybe_unused]] static void show(const std::vector<std::string> &v) {
+    for (const auto &s : v) std::cout << s << ' ';
+    std::cout << '\\n';
+}
+[[maybe_unused]] static void show(const std::vector<std::vector<int>> &v) {
+    for (const auto &row : v) { show(row); }
+}
+template <class T> void show(const T &x) { std::cout << x << '\\n'; }
+'''
+
+
+DEF_RE = re.compile(r"/\*\*?(.*?)\*/", re.S)
+
+
+def extract_struct_def(src: str) -> str:
+    """LeetCode 把 ListNode/TreeNode 的定义放在注释里，原样抠出来当代码用。"""
+    for block in DEF_RE.findall(src):
+        lines = []
+        for line in block.splitlines():
+            line = re.sub(r"^\s*\*+\s?", "", line).rstrip()
+            if line.strip():
+                lines.append(line)
+        code = "\n".join(lines)
+        m = re.search(r"^\s*(?:struct|class)\s+\w+", code, re.M)
+        if m and "Definition for" in block:
+            return code[m.start():]   # 丢掉 "Definition for ..." 那行散文
+    return ""
+
+
+NODE_TYPES = ("ListNode", "TreeNode", "Node")
+
+
+def render(num: str, filename: str, ret: str, name: str, params: list[tuple[str, str]], prelude: str = "") -> str:
+    needs_structs = not prelude and any(t.startswith(NODE_TYPES) for t, _ in params)
+    structs_include = '#include "structs.h"' if needs_structs else ""
+
+    hint = {}
+    for t, n in params:
+        if needs_structs and t.startswith("TreeNode"):
+            hint[n] = "make_tree({3, 9, 20, std::nullopt, std::nullopt, 15, 7})"
+        elif needs_structs and t.startswith("ListNode"):
+            hint[n] = "make_list({1, 2, 3, 4})"
+
+    decls = "\n".join(
+        f"    {t} {n}{{{hint.get(n, '')}}};   // TODO: 填输入" for t, n in params
+    ) or "    // 该方法没有参数"
+    args = ", ".join(n for _, n in params)
+    ptr_ret = "*" in ret
+    if ret == "void":
+        call = f"    s.{name}({args});   // 原地修改，看参数"
+        tail = "\n".join(f"    show({n});" for _, n in params)
+    elif ptr_ret:
+        call = f"    auto ans = s.{name}({args});"
+        tail = "    (void)ans;   // TODO: 指针返回（树/链表），自己写打印"
+    else:
+        call = f"    auto ans = s.{name}({args});"
+        tail = "    show(ans);"
+    return f'''\
+// {num}. 自动生成的测试骨架 —— tools/newtest {num}
+// 需要你补的只有「填输入」那几行；调用的方法名/类型都是从这个文件里抄出来的。
+#include <cstddef>
+#include <iostream>
+#include <string>
+#include <vector>
+
+{prelude}
+{structs_include}
+#include "{filename}"
+
+{HELPERS}
+int main() {{
+    Solution s;
+{decls}
+
+{call}
+{tail}
+    return 0;
+}}
+'''
+
+
+def main() -> int:
+    args = [a for a in sys.argv[1:] if a != "-f"]
+    force = "-f" in sys.argv[1:]
+
+    if not args or args[0] in {"-h", "--help"}:
+        print(__doc__)
+        return 0
+
+    if args[0] == "--stats":
+        solutions = {p.split(".")[0] for p in (f.name for f in LEET.glob("*.cpp"))}
+        done = {p.stem for p in TESTS.glob("[0-9]*.cpp")}
+        print(f"解法 {len(solutions)} 道，已写测试 {len(done)} 道，未写 {len(solutions - done)} 道")
+        missing = sorted(solutions - done, key=lambda x: int(x))
+        print("未写测试:", " ".join(missing[:40]), "..." if len(missing) > 40 else "")
+        return 0
+
+    num = args[0].lstrip("0") or "0"
+    hits = sorted(glob.glob(str(LEET / f"{num}.*.cpp")))
+    if not hits:
+        print(f"找不到 leetcode/{num}.*.cpp", file=sys.stderr)
+        return 1
+    src_path = pathlib.Path(hits[0])
+    src_text = src_path.read_text(encoding="utf-8")
+    sig = find_signature(src_text)
+    if not sig:
+        print(f"没能从 {src_path.name} 里解析出 class Solution 的方法签名", file=sys.stderr)
+        return 1
+    ret, name, raw_params = sig
+
+    out = TESTS / f"{num}.cpp"
+    if out.exists() and not force:
+        print(f"{out} 已存在，用 -f 覆盖", file=sys.stderr)
+        return 1
+
+    prelude = extract_struct_def(src_text)
+    out.write_text(render(num, src_path.name, ret, name, parse_params(raw_params), prelude), encoding="utf-8")
+    print(f"已生成 {out.relative_to(ROOT)}  ← {src_path.name}  ({ret} {name}({raw_params}))")
+    print(f"下一步: 填输入 → make out/{num} && ./out/{num}  或打开 {out.name} 按 F5")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

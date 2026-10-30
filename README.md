@@ -23,6 +23,21 @@ make out/1004 && ./out/1004               # 3. 构建并跑
 
 调试：打开 `tests/1004.cpp`，按 `F5` → 自动 `make out/1004` 再挂 gdb。
 
+## 自动生成测试骨架
+
+```bash
+tools/newtest 739        # 从 leetcode/739.*.cpp 抠出方法签名，生成 tests/739.cpp
+tools/newtest -f 739     # 覆盖已有
+tools/newtest --stats    # 81 道解法里还有几道没写测试
+```
+
+自动的部分：方法名、参数类型、变量声明、调用、打印、链表/树节点定义
+（能从解法文件注释里抠出 `struct ListNode` 就用它的，抠不出就 include `tests/structs.h`，
+里面还带 `make_list({1,2,3})` / `make_tree({3,9,std::nullopt,15,7})` 构造辅助）。
+
+**不能自动的部分：输入。** C++ 没有反射，每道题的输入形态和序列化方式都不同，
+所以生成出来的 `{}` 空容器必须你自己填。
+
 ## 命令
 
 ```bash
