@@ -1,0 +1,17 @@
+{
+  "configurations": [
+    {
+      "name": "Linux",
+      // 解法文件在 leetcode/，测试文件在 tests/，两边都要能互相 include
+      "includePath": [
+        "${workspaceFolder}/leetcode",
+        "${workspaceFolder}/tests"
+      ],
+      "compilerPath": "/usr/bin/g++",
+      "cStandard": "c23",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "linux-gcc-x64"
+    }
+  ],
+  "version": 4
+}

@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "gdb 调试当前测试",
+      // 在 tests/1004.cpp 里按 F5 → 构建 out/1004 并调试
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/out/${fileBasenameNoExtension}",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      // 用集成终端做 stdin/stdout，测试里写 std::cin 也能调试
+      "console": "integratedTerminal",
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "targetArchitecture": "x86_64",
+      // F11 只进你自己的代码，不进 /usr/include/c++
+      "justMyCode": true,
+      "preLaunchTask": "make 当前测试",
+      "setupCommands": [
+        { "text": "-enable-pretty-printing", "ignoreFailures": true }
+      ]
+    }
+  ]
+}
