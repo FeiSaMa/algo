@@ -1,0 +1,19 @@
+# ---- 编译产物 ----
+build/
+out/
+*.o
+*.d
+*.a
+*.so
+*.exe
+a.out
+compile_commands.json
+
+# ---- 编辑器缓存 ----
+.vscode/ipch/
+.cache/
+
+# ---- 临时文件 ----
+*.tmp
+*.swp
+*~
