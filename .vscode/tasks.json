@@ -1,12 +1,13 @@
 {
-  // 关键：${fileBasenameNoExtension} 取当前文件（tests/1004.cpp → 1004）
+  // 构建"当前文件对应的那一道题"：解法文件(leetcode/56.merge-intervals.cpp)
+  // 和测试文件(tests/56.cpp)都能用，题号由 tools/build 从文件名推出。
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "make 当前测试",
+      "label": "构建当前题",
       "type": "shell",
-      "command": "make",
-      "args": ["out/${fileBasenameNoExtension}"],
+      "command": "./tools/build",
+      "args": ["${file}"],
       "options": { "cwd": "${workspaceFolder}" },
       "group": { "kind": "build", "isDefault": true },
       "problemMatcher": ["$gcc"]

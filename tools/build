@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# 用法: tools/build <任意文件>
+#   tools/build leetcode/56.merge-intervals.cpp   → make out/56
+#   tools/build tests/56.cpp                      → make out/56
+# 构建后把 out/current 指向该二进制，方便 launch.json 用固定路径调试。
+set -euo pipefail
+
+file=${1:?用法: tools/build <文件路径>}
+base=$(basename "$file")
+base=${base%.cpp}
+base=${base%.cc}
+num=${base%%.*}                     # 56.merge-intervals → 56
+
+if [[ ! -f "tests/$num.cpp" ]]; then
+    echo "没有 tests/$num.cpp，先跑: tools/newtest $num" >&2
+    exit 1
+fi
+
+make "out/$num"
+ln -sfn "$num" out/current
+echo "→ out/$num（out/current 已指向它）"

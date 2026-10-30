@@ -21,7 +21,8 @@ $EDITOR tests/1004.cpp                    # 2. 改 include 的文件名 + main �
 make out/1004 && ./out/1004               # 3. 构建并跑
 ```
 
-调试：打开 `tests/1004.cpp`，按 `F5` → 自动 `make out/1004` 再挂 gdb。
+调试：**在 `tests/1004.cpp` 或 `leetcode/1004.max-xxx.cpp` 里按 `F5` 都行**
+（题号由 `tools/build` 从文件名推出，`${file}` → `out/1004` → `out/current`）。
 
 ## 自动生成测试骨架
 
@@ -41,6 +42,8 @@ tools/newtest --stats    # 81 道解法里还有几道没写测试
 ## 命令
 
 ```bash
+./tools/build leetcode/56.merge-intervals.cpp   # 从任一文件构建对应题
+./tools/build tests/56.cpp                      # 同上（题号都是 56）
 make                # 构建 tests/ 下所有测试
 make list           # 看有哪些可构建
 make out/1004       # 只构建一道
