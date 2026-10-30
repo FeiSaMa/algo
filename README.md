@@ -42,6 +42,8 @@ tools/newtest --stats    # 81 道解法里还有几道没写测试
 ## 命令
 
 ```bash
+./tools/run 56                                  # 构建 + 运行（最常用）
+./tools/run                                     # 列出能跑的题
 ./tools/build leetcode/56.merge-intervals.cpp   # 从任一文件构建对应题
 ./tools/build tests/56.cpp                      # 同上（题号都是 56）
 make                # 构建 tests/ 下所有测试

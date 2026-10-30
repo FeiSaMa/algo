@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# 用法:
+#   tools/run 56        构建并运行 out/56
+#   tools/run           列出可以跑的题
+set -euo pipefail
+
+if [[ $# -eq 0 ]]; then
+    echo "可运行的测试:"
+    for f in tests/[0-9]*.cpp; do
+        printf '  %s\n' "$(basename "${f%.cpp}")"
+    done
+    exit 0
+fi
+
+num=${1#0}
+[[ -f "tests/$num.cpp" ]] || { echo "没有 tests/$num.cpp，先: tools/newtest $num" >&2; exit 1; }
+
+make "out/$num"
+echo "── 运行 out/$num ──"
+exec "./out/$num"
