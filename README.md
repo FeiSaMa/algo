@@ -106,7 +106,7 @@ make clean                                       # 删除 out/
 | --- | --- | --- |
 | 构建当前题 | `Ctrl+Shift+B` | 走 `./tools/build ${file}`，解法文件和测试文件都能用 |
 | 调试当前题 | `F5` | 先构建（`out/NN`），再调试 `out/current` |
-| 单步跳过 / 进入 | `F10` / `F11` | `justMyCode: true` 已开，`F11` 不会钻进 `/usr/include/c++` |
+| 单步跳过 / 进入 | `F10` / `F11` | `launch.json` 里配了 gdb `skip`，`F11` 不会钻进 `/usr/include/c++` |
 | 条件断点 / 日志点 | 右键红点 | 例：条件 `i == 4`；日志 `i={i}, sum={sum}` |
 | 观察点 | 调试控制台 `-exec watch i` | 看循环变量每次自增 |
 
@@ -136,4 +136,7 @@ cmake -S . -B build && cmake --build build
    没有 `tests/NN.cpp` 时 `tools/build` 会报错并中止调试，不会静默跑上一个二进制。
 3. `out/` 和 `build/` 都在 `.gitignore` 里，别提交产物。
 4. `tests/structs.h` 与解法文件里**非注释版**的 `struct ListNode/TreeNode` 会冲突——真遇到就删掉 `structs.h` 里对应的那个。
-5. 断点是**语句级**的：停在某行 = 该行还没执行，所以断在声明行看到的是未初始化值；想在循环"多跑一轮"时停，用观察点而不是行断点。
+5. **`cppdbg` 不支持 `justMyCode`**（那是 cppvsdbg/MSVC 的字段，写上去被忽略）。要让 `F11` 不钻进
+   `basic_string.h`/`allocator.h`，得用 gdb 自己的 `skip`——`launch.json` 的 `setupCommands` 里那两条
+   `-interpreter-exec console "skip -gfile /usr/include/c++/*/bits/*.h"` 就是干这个的。
+6. 断点是**语句级**的：停在某行 = 该行还没执行，所以断在声明行看到的是未初始化值；想在循环"多跑一轮"时停，用观察点而不是行断点。

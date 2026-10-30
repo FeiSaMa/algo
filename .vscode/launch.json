@@ -17,11 +17,13 @@
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb",
       "targetArchitecture": "x86_64",
-      // F11 只进你自己的代码，不进 /usr/include/c++
-      "justMyCode": true,
       "preLaunchTask": "构建当前题",
       "setupCommands": [
-        { "text": "-enable-pretty-printing", "ignoreFailures": true }
+        { "text": "-enable-pretty-printing", "ignoreFailures": true },
+        // cppdbg 不支持 justMyCode（那是 cppvsdbg 的字段），改用 gdb 的 skip：
+        // F11 不再钻进 /usr/include/c++ 里的 basic_string.h / allocator.h
+        { "text": "-interpreter-exec console \"skip -gfile /usr/include/c++/*/bits/*.h\"", "ignoreFailures": true },
+        { "text": "-interpreter-exec console \"skip -gfile /usr/include/c++/*/*.h\"", "ignoreFailures": true }
       ]
     }
   ]
