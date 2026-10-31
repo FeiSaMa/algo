@@ -17,3 +17,7 @@ compile_commands.json
 *.tmp
 *.swp
 *~
+
+# ---- DeepTutor 工作区产物 ----
+.deeptutor/
+outputs/
