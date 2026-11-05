@@ -18,6 +18,9 @@ compile_commands.json
 *.swp
 *~
 
+# ---- 会话交接文档（本机上下文，不进版本库）----
+HANDOFF.md
+
 # ---- DeepTutor 工作区产物 ----
 .deeptutor/
 outputs/
