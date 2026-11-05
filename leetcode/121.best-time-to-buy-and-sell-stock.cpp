@@ -1,4 +1,5 @@
 #include <vector>
+#include <climits>
 using namespace std;
 /*
  * @lc app=leetcode id=121 lang=cpp
@@ -10,8 +11,13 @@ using namespace std;
 class Solution {
 public:
     int maxProfit(vector<int>& prices) {
-        int n = prices.size();
-
+        int minPrice = INT_MAX;
+        int ans = 0;
+        for (int price : prices) {
+            minPrice = min(price, minPrice);
+            ans = max(ans, price - minPrice);
+        }
+        return ans;
     }
 };
 // @lc code=end
